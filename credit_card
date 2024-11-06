@@ -1,0 +1,47 @@
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers,models
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+data = pd.read_csv("C:\\Users\\shant\\Downloads\\drive-download-20241102T085443Z-001\\Credit Card Dataset\\creditcard.csv")
+scaler = StandardScaler()
+x = scaler.fit_transform(data)
+y=x
+x_train,x_test,_,_=train_test_split(x,y,test_size=0.2,random_state=42)
+input_dim = x_train.shape[1]
+input_dim
+encoder=models.Sequential([
+    layers.Input(shape=(input_dim,)),
+    layers.Dense(32,activation='relu'),
+    layers.Dense(16,activation='relu'),
+    layers.Dense(8,activation='relu')
+])
+decoder=models.Sequential([
+    layers.Input(shape=(8,)),
+    layers.Dense(16,activation='relu'),
+    layers.Dense(32,activation='relu'),
+    layers.Dense(input_dim,activation='linear')
+])
+autoencoder=models.Sequential([
+    encoder,
+    decoder
+])
+autoencoder.compile(optimizer='Adam',loss='mean_squared_error')
+autoencoder.fit(x_train,x_train,epochs=10)
+y_pred = auencoder.predict(x_test)
+mse=np.mean(np.power(x_test-y_pred,2),axis=1)
+threshold = np.percentile(mse,95)
+anomalies = mse>threshold
+total=np.sum(anomalies)
+total
+plt.figure(figsize=(12,6))
+plt.plot(mse,label="MSE",marker='o',linestyle='',markersize=3)
+plt.axhline(threshold,label="Threshold",color="red")
+plt.xlabel("Index")
+plt.ylabel("MSE")
+plt.title("Anomaly Detection")
+plt.legend()
+plt.show()
